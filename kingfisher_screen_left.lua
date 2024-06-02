@@ -1,3 +1,10 @@
+local b1 = 0
+local b2 = 0
+local cr = 0
+local rps = 0
+
+local min = math.min
+
 local GradiantBar = {}
 function GradiantBar:new(o)
     o = o or {}
@@ -74,18 +81,29 @@ function GradiantBar:draw()
 	end
 end
 
-b1Bar = GradiantBar:new({ x = 10, y = 24, threshold = 0.66, label = "B1" })
-b2Bar = GradiantBar:new({ x = 34, y = 24, threshold = 0.66, label = "B2"})
-crBar = GradiantBar:new({ x = 58, y = 24, threshold = 0.66, label = "CR"})
-rpsBar = GradiantBar:new({ x = 82, y = 24, threshold = 0.66, label = "RPS"})
-b1Bar:setValue(1.0)
-b1Bar:setCustomValue(300)
-b2Bar:setValue(0.66)
-crBar:setValue(0.4)
-rpsBar:setValue(0.85)
+b1Bar = GradiantBar:new({ x = 10, y = 24, threshold = 0.65, label = "B1" })
+b2Bar = GradiantBar:new({ x = 34, y = 24, threshold = 0.65, label = "B2"})
+crBar = GradiantBar:new({ x = 58, y = 24, threshold = 0.65, label = "CR"})
+rpsBar = GradiantBar:new({ x = 82, y = 24, threshold = 0.69, label = "RPS"})
 function onDraw ()
 	b1Bar:draw()
 	b2Bar:draw()
 	crBar:draw()
 	rpsBar:draw()
+end
+
+function onTick ()
+	b1 = input.getNumber(5)
+	b2 = input.getNumber(6)
+	cr = input.getNumber(4)
+	rps = input.getNumber(3)
+	
+	b1Bar:setValue(min(b1 / 242, 1))
+	b1Bar:setCustomValue(b1)
+	b2Bar:setValue(min(b2 / 242, 1))
+	b2Bar:setCustomValue(b2)
+	crBar:setValue(min(cr / 390, 1))
+	crBar:setCustomValue(cr)
+	rpsBar:setValue(min(rps / 210, 1))
+	rpsBar:setCustomValue(rps)
 end
