@@ -1,16 +1,16 @@
 -- Inputs:
 -- 1: touchscreen press (bool)
--- 2: altH on (bool)
--- 3: stab on (bool)
--- 4: ap on (bool)
+-- 2: ldg on (bool)
+-- 3: slow on (bool)
+-- 4: cam on (bool)
 -- 3: touchscreen x (num)
 -- 4: touchscreen y (num)
 -- 5: current mode (num)
 
 -- Outputs:
--- 1: AltH (bool)
--- 2: STB (bool)
--- 3: A/P (bool)
+-- 1: LDG (bool)
+-- 2: SLOW (bool)
+-- 3: CAM (bool)
 
 s = screen
 local insert = table.insert
@@ -18,8 +18,6 @@ local unpack = table.unpack
 
 local wasPressed = false
 local mode = 0
-
-local tickLimit = 35
 
 -- Can subscribe to these 2 events:
 -- mouseDown - fires when mouse is first clicked. cb called with args x, y
@@ -122,19 +120,19 @@ function Toggle:draw()
 	end
 end
 
-function setAltH (btn)
+function setLdg (btn)
 	return function ()
 		output.setBool(1, btn.value)
 	end
 end
 
-function setStb (btn)
+function setSlow (btn)
 	return function ()
 		output.setBool(2, btn.value)	
 	end
 end
 
-function setAP (btn)
+function setCam (btn)
 	return function ()
 		output.setBool(3, btn.value)	
 	end
@@ -142,73 +140,33 @@ end
 
 -- Event emitters
 local e = TouchEmitter:new()
-local apInput = TouchEmitter:new({ eventSubs = { alt = {}, stb = {}, ap = {} } })
 
 -- We 2-way data-bind the buttons by:
 -- sub to click events and change state/outputs
 -- sub to events from the AP controller and change state output as well
 -- cb - callback when clicked
 -- onChange - callback when state change is driven by input from AP controller
-local altToggle = Toggle:new({ label = "ALTH", y = 2})
-altToggle.cb = setAltH(altToggle)
-altToggle.onChange = setAltH(altToggle)
-local stbToggle = Toggle:new({ label = "STB", y = 9 })
-stbToggle.cb = setStb(stbToggle)
-stbToggle.onChange = setStb(stbToggle)
-local apToggle = Toggle:new({ label = "A/P", y = 16 })
-apToggle.cb = setAP(apToggle)
-apToggle.onChange = setAP(apToggle)
+local ldgToggle = Toggle:new({ label = "LDG", y = 2})
+ldgToggle.cb = setLdg(ldgToggle)
+local slowToggle = Toggle:new({ label = "SLOW", y = 9 })
+slowToggle.cb = setSlow(slowToggle)
+local camToggle = Toggle:new({ label = "CAM", y = 16 })
+camToggle.cb = setCam(camToggle)
 
-e:subscribe("mouseDown", altToggle:onClick())
-apInput:subscribe("alt", altToggle:setValue())
-e:subscribe("mouseDown", stbToggle:onClick())
-apInput:subscribe("stb", stbToggle:setValue())
-e:subscribe("mouseDown", apToggle:onClick())
-apInput:subscribe("ap", apToggle:setValue())
+e:subscribe("mouseDown", ldgToggle:onClick())
+e:subscribe("mouseDown", slowToggle:onClick())
+e:subscribe("mouseDown", camToggle:onClick())
 
 function onDraw()
-	if mode ~= 4 then return end
-	altToggle:draw()
-	stbToggle:draw()
-	apToggle:draw()
+    if mode ~= 3 then return end
+	ldgToggle:draw()
+	slowToggle:draw()
+	camToggle:draw()
 end
 
-local altTickCount = 0
-local stbTickCount = 0
-local apTickCount = 0
 function onTick()
-	mode = input.getNumber(5)
-	if mode ~= 4 then return end
-	-- Emit events when the input autopilot composite values change
-	-- (i.e. autopilot turns itself off because user changed pitch etc)
-	local inputAltH = input.getBool(2)
-	if altToggle.value ~= inputAltH then
-		altTickCount = altTickCount + 1
-		if altTickCount > tickLimit then
-			apInput:emit("alt", inputAltH)
-			altTickCount = 0
-		end
-		return
-	end
-	local inputStb = input.getBool(3)
-	if stbToggle.value ~= inputStb then
-		stbTickCount = stbTickCount + 1
-		if stbTickCount > tickLimit then
-			apInput:emit("stb", inputStb)
-			stbTickCount = 0
-		end
-		return
-	end
-	local inputAP = input.getBool(4)
-	if apToggle.value ~= inputAP then
-		apTickCount = apTickCount + 1
-		if apTickCount > tickLimit then
-			apInput:emit("ap", inputAP)
-			apTickCount = 0	
-		end
-		return
-	end
-
+    mode = input.getNumber(5)
+    if mode ~= 3 then return end
 	-- Click TouchEmitter handling
 	local isPressed = input.getBool(1)
 	local mouseX = input.getNumber(3)
