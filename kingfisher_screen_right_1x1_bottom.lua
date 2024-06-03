@@ -1,9 +1,41 @@
 s = screen
 local insert = table.insert
+local remove = table.remove
 local unpack = table.unpack
 local max = math.max
 
 local wasPressed = false
+
+local timers = {}
+
+-- Timer to fire based on number of game ticks passing
+local Timer = {}
+function Timer:new (o)
+	o = o or {}
+	-- duration is in frames
+	o.duration = o.duration or 10
+	o.cb = o.cb or nil
+	o.idx = 0
+	o.tick = self.tick
+	o.startTimer = self.startTimer
+	return o
+end
+
+function Timer:tick()
+	self.duration = max(self.duration - 1, 0)
+	if self.duration < 1 then
+		remove(timers, self.idx)
+		for k,v in ipairs(timers) do
+			v.idx = k	
+		end
+		self.cb()
+	end
+end
+
+function Timer:startTimer()
+	insert(timers, self)
+	self.idx = #timers
+end
 
 -- Can subscribe to these 2 events:
 -- mouseDown - fires when mouse is first clicked. cb called with args x, y
@@ -94,6 +126,10 @@ function Button:draw()
 	end
 end
 
+function stopPulse ()
+	output.setBool(1, false)	
+end
+
 -- Flare indicator
 local FlareArray = {}
 function FlareArray:new(o)
@@ -127,9 +163,11 @@ end
 function FlareArray:fire()
 	return function ()
 		self.count = max(self.count - 1, 0)
+		output.setBool(1, true)
+		local t = Timer:new({ cb = stopPulse })
+		t:startTimer()
 	end
 end
-
 
 -- Event emitters
 local e = TouchEmitter:new()
@@ -146,6 +184,10 @@ function onDraw()
 end
 
 function onTick()
+	-- Tick any timers
+	for k,v in ipairs(timers) do
+		v:tick()	
+	end
 	-- Click TouchEmitter handling
 	local isPressed = input.getBool(1)
 	local mouseX = input.getNumber(3)
