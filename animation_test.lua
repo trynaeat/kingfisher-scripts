@@ -42,7 +42,7 @@ function AnimationManager:draw()
 end
 
 function decodeRGB(rgb)
-	return { rgb >> 16, rgb >> 8 ~ tonumber('FF00', 16), rgb & ~tonumber('FFFF00', 16) }
+	return { rgb >> 16, rgb >> 8 & ~tonumber('FF00', 16), rgb & ~tonumber('FFFF00', 16) }
 end
 
 function decodePixel(pixel)
@@ -69,7 +69,7 @@ function deserialize(str)
 end
 
 local dStr = ''
-local dataCt = 3
+local dataCt = 6
 for i=1,dataCt do
 	local data = property.getText("data" .. i)
 	dStr = dStr .. data
