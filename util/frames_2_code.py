@@ -22,7 +22,8 @@ def toLuaCode(dict):
 @click.option('--gamma-correction', type=float, default=2.1, show_default=True)
 def frames2Code(dir, gamma_correction):
     images = list()
-    codeOut = []
+    filesOut = list()
+    filesOut.append('')
     for file in sorted(Path(dir).iterdir()):
         click.echo(file.name)
         if not file.is_file():
@@ -43,10 +44,30 @@ def frames2Code(dir, gamma_correction):
                     if not rgb in imgCode:
                         imgCode[rgb] = list()
                     imgCode[rgb].append((x, y))
-        codeOut.append(f'{{{toLuaCode(imgCode)}}}')
+        codeIn = ''
+        if len(filesOut) > 0:
+            codeIn = filesOut[-1]
+        frameCode = f'{{{toLuaCode(imgCode)}}}'
+        length = len(''.join(codeIn)) + len(frameCode)
+        if length <= 4000:
+            if codeIn == '':
+                codeOut = frameCode
+            else:
+                codeOut = ','.join([codeIn, frameCode])
+            filesOut[-1] = codeOut
+        else:
+            # Start a new file for this frame
+            codeOut = frameCode
+            filesOut.append(codeOut)
+    # Wrap up all files (each has a list of comma separated frames) into a table
+    for i,file in enumerate(filesOut):
+        filesOut[i] = f'{{{file}}}'
+
     iio.imwrite("./test.png", testImg)
-    with open("./test.txt", 'w') as text_file:
-        text_file.write(f'{{{",".join(codeOut)}}}')
+    for i, file in enumerate(filesOut):
+        with open(f'test{i}.txt', 'w') as text_file:
+            click.echo(f'test{i}.txt')
+            text_file.write(file)
 
 if __name__ == '__main__':
     frames2Code()

@@ -5,6 +5,12 @@ local insert = table.insert
 local match = string.match
 local gmatch = string.gmatch
 
+function merge(t1, t2)
+	for k, v in ipairs(t2) do
+		insert(t1, v)	
+	end
+end
+
 local AnimationManager = {}
 function AnimationManager:new(o)
 	o = o or {}
@@ -54,8 +60,17 @@ function deserialize(str)
 	return ds
 end
 
-local data = property.getText("data1")
-local ds = deserialize(data)
+local ds = nil
+local dataCt = 5
+for i=1,dataCt do
+	local data = property.getText("data" .. i)
+	local dsi = deserialize(data)
+	if not ds then
+		ds = dsi
+	else
+		merge(ds, dsi)
+	end
+end
 local a = AnimationManager:new({ data = ds, fps = 24 })
 function onDraw()
 	a:draw()
