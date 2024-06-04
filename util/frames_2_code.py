@@ -9,12 +9,18 @@ def toLuaCode(dict):
     for rgb in dict:
         pixels = ''
         for pixel in dict[rgb]:
-            pixels += f'{{{pixel[0]},{pixel[1]}}},'
+            pixels += f'{pixel},'
         pixels = pixels[:-1]
-        str += f'{{{rgb[0]},{rgb[1]},{rgb[2]}}}={{{pixels}}},'
+        str += f'{rgb}={{{pixels}}},'
     str = str[:-1]
     str += '}'
     return str
+
+def encode16 (pixel):
+    return pixel[0] * 256 + pixel[1]
+
+def encodeRGB16 (rgb):
+    return rgb[0] * 256 * 256 + rgb[1] * 256 + rgb[2]
 
 
 @click.command()
@@ -38,12 +44,13 @@ def frames2Code(dir, gamma_correction, test_image):
         imgCode = dict()
         for y, row in enumerate(img):
             for x, val in enumerate(row):
-                rgb = (val[0], val[1], val[2])
-                if rgb != (0, 0, 0):
+                rgb = hex(encodeRGB16(val))[2:]
+                if rgb != '0':
                     if not rgb in imgCode:
                         imgCode[rgb] = list()
-                    imgCode[rgb].append((x, y))
-        frameCode = f'{{{toLuaCode(imgCode)}}}'
+                    pixelHex = hex(encode16((x, y)))
+                    imgCode[rgb].append(pixelHex[2:])
+        frameCode = toLuaCode(imgCode)
         if codeOut == '':
             codeOut = frameCode
         else:

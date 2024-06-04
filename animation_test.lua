@@ -41,19 +41,29 @@ function AnimationManager:draw()
 	end
 end
 
+function decodeRGB(rgb)
+	return { r = rgb >> 16, g = rgb >> 8 ~ tonumber('FF00', 16), b = rgb & ~tonumber('FFFF00', 16) }
+end
+
+function decodePixel(pixel)
+	return { x = pixel >> 8, y = (pixel & ~tonumber('FF00', 16)) }
+end
+
 function deserialize(str)
 	local ds = {}
-	local frames = gmatch(str, "{({{%d+,%d+,%d+}={[{%d,%d},?]+},?)}")
+	local frames = gmatch(str, "({%x+={[%x+,?]+})")
 	for f in frames do
 		local frame = {}
-		local colorArrs = gmatch(f, "({%d+,%d+,%d+}={[{%d,%d},?]+}[,}])")
+		local colorArrs = gmatch(f, "(%x+={[%x+,?]+}[,}]?)")
 		for w in colorArrs do
-			local r, g, b, pixels = match(w, "{(%d+),(%d+),(%d+)}={(%g*)}")
+			local rgb, pixels = match(w, "(%x+)={(%g*)}")
 			local pixelArr = {}
-			for x, y in gmatch(pixels, "{(%d+),(%d+)},?") do
-				insert(pixelArr, {tonumber(x), tonumber(y)})
+			for pixel in gmatch(pixels, "(%x+),?") do
+				local pixelD = decodePixel(tonumber(pixel, 16))
+				insert(pixelArr, {tonumber(pixelD.x), tonumber(pixelD.y)})
 			end
-			frame[{tonumber(r), tonumber(g), tonumber(b)}] = pixelArr
+			local rgbD = decodeRGB(tonumber(rgb, 16))
+			frame[{tonumber(rgbD.r), tonumber(rgbD.g), tonumber(rgbD.b)}] = pixelArr
 		end
 		insert(ds, frame)
 	end
@@ -61,7 +71,7 @@ function deserialize(str)
 end
 
 local dStr = ''
-local dataCt = 4
+local dataCt = 3
 for i=1,dataCt do
 	local data = property.getText("data" .. i)
 	dStr = dStr .. data
