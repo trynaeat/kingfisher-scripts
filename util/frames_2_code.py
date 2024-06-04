@@ -25,7 +25,9 @@ def encodeRGB16 (rgb):
 @click.argument('dir')
 @click.option('--gamma-correction', type=float, default=2.1, show_default=True)
 @click.option('--test-image', type=int)
-def frames2Code(dir, gamma_correction, test_image):
+@click.option('--filesize', type = int, default=4096, show_default=True)
+@click.option('--out', type=str, default="out", show_default=True)
+def frames2Code(dir, gamma_correction, test_image, filesize, out):
     images = list()
     codeOut = ''
     for file in sorted(Path(dir).iterdir()):
@@ -57,15 +59,19 @@ def frames2Code(dir, gamma_correction, test_image):
     # Wrap whole array of frames into its own table
     codeOut = f'{{{codeOut}}}'
     # Split code into 4k files
-    chunkSize = 4096
-    chunks = [codeOut[i:i+chunkSize] for i in range(0, len(codeOut), chunkSize)]
+    chunkSize = filesize
+    chunks = []
+    if chunkSize == 0:
+      chunks = [codeOut]  
+    else:
+      chunks = [codeOut[i:i+chunkSize] for i in range(0, len(codeOut), chunkSize)]
 
     if test_image:
         testImg = images[test_image]
         iio.imwrite("./test.png", testImg)
     for i, chunk in enumerate(chunks):
-        with open(f'test{i}.txt', 'w') as text_file:
-            click.echo(f'test{i}.txt')
+        with open(f'{out}{i}.txt', 'w') as text_file:
+            click.echo(f'Writing: {out}{i}.txt')
             text_file.write(chunk)
 
 if __name__ == '__main__':
