@@ -60,17 +60,13 @@ function deserialize(str)
 	return ds
 end
 
-local ds = nil
-local dataCt = 5
+local dStr = ''
+local dataCt = 4
 for i=1,dataCt do
 	local data = property.getText("data" .. i)
-	local dsi = deserialize(data)
-	if not ds then
-		ds = dsi
-	else
-		merge(ds, dsi)
-	end
+	dStr = dStr .. data
 end
+local ds = deserialize(dStr)
 local a = AnimationManager:new({ data = ds, fps = 24 })
 function onDraw()
 	a:draw()
