@@ -5,15 +5,13 @@ import cv2
 import numpy as np
 
 def toLuaCode(dict):
-    str = '{'
+    str = ''
     for rgb in dict:
         pixels = ''
         for pixel in dict[rgb]:
             pixels += f'{pixel},'
         pixels = pixels[:-1]
-        str += f'{rgb}={{{pixels}}},'
-    str = str[:-1]
-    str += '}'
+        str += f'={rgb}={pixels}'
     return str
 
 def encode16 (pixel):
@@ -54,7 +52,7 @@ def frames2Code(dir, gamma_correction, test_image):
         if codeOut == '':
             codeOut = frameCode
         else:
-            codeOut = ','.join([codeOut, frameCode])
+            codeOut = '|'.join([codeOut, frameCode])
 
     # Wrap whole array of frames into its own table
     codeOut = f'{{{codeOut}}}'

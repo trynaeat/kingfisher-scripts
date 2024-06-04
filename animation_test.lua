@@ -51,10 +51,10 @@ end
 
 function deserialize(str)
 	local ds = {}
-	local frames = gmatch(str, "(%x+={[^{}]*}[^}]*)")
+	local frames = gmatch(str, "|([^|]+)")
 	for f in frames do
 		local frame = {}
-		for rgb, pixels in gmatch(f, "(%x+)={([%x+,?]+),?}?") do
+		for rgb, pixels in gmatch(f, "=(%x+)=([^=]*)") do
 			local pixelArr = {}
 			for pixel in gmatch(pixels, "(%x+),?") do
 				local pixelD = decodePixel(tonumber(pixel, 16))
