@@ -1,8 +1,16 @@
 s=screen
-screenWidth = 0
-screenHeight = 0
+local screenWidth = 0
+local screenHeight = 0
 
-speed = 0
+local speed = 0
+local mode = 0
+
+-- Custom font stuff
+-- ======================
+dl=s.drawLine
+
+function Txt(x,y,t)for i=1,#t do c=t:sub(i,i):upper():byte()*3-95if c>193then c=c-78 end a="0x"..string.sub("0000B0101F6F5FAB6DEDA010096690A4A4E4048444080168F9F8FABDDDB9F47DBBDDF3D1FDFF570500580A4AAA4A0391B96E5E6DF99669F9DF15FD96F4F9F978496F88FF3FF1F69625F79FA5FDDA1F1F8F787FCFB4B3C3BFD09F861F902128880219F60F06F9426",c,c+2)for j=0,11 do if a&(1<<j)>0then b=x+j//4+i*4-4g=y+j%4 dl(b,g,b,g+1)end end end end
+-- ===========================
 
 
 function drawBackgroundLines ()
@@ -27,6 +35,7 @@ end
 
 function onTick ()
 	speed = input.getNumber(2)
+	mode = input.getNumber(5)
 end
 
 function onDraw ()
@@ -35,4 +44,10 @@ function onDraw ()
 	drawBackgroundLines()
 	drawSpeed()
 	drawSpeedUnits()
+
+	s.setColor(238, 238, 238)
+	Txt(1, 19, "ALT")
+	Txt(1, 25, "1234")
+	Txt(1, 2, "FLIGHT")
+	Txt(74, 2, "00:00")
 end
