@@ -33,8 +33,8 @@ end
 function AnimationManager:draw()
 	local frame = self.data[self.frame]
 	for k,v in pairs(frame) do
-		s.setColor(unpack(k))
-		for i,p in ipairs(v) do
+		s.setColor(unpack(v[1]))
+		for i,p in ipairs(v[2]) do
 			local x, y = unpack(p)
 			s.drawRectF(x, y, 1, 1)
 		end
@@ -42,7 +42,7 @@ function AnimationManager:draw()
 end
 
 function decodeRGB(rgb)
-	return { r = rgb >> 16, g = rgb >> 8 ~ tonumber('FF00', 16), b = rgb & ~tonumber('FFFF00', 16) }
+	return { rgb >> 16, rgb >> 8 ~ tonumber('FF00', 16), rgb & ~tonumber('FFFF00', 16) }
 end
 
 function decodePixel(pixel)
@@ -51,19 +51,17 @@ end
 
 function deserialize(str)
 	local ds = {}
-	local frames = gmatch(str, "({%x+={[%x+,?]+})")
+	local frames = gmatch(str, "(%x+={[^{}]*}[^}]*)")
 	for f in frames do
 		local frame = {}
-		local colorArrs = gmatch(f, "(%x+={[%x+,?]+}[,}]?)")
-		for w in colorArrs do
-			local rgb, pixels = match(w, "(%x+)={(%g*)}")
+		for rgb, pixels in gmatch(f, "(%x+)={([%x+,?]+),?}?") do
 			local pixelArr = {}
 			for pixel in gmatch(pixels, "(%x+),?") do
 				local pixelD = decodePixel(tonumber(pixel, 16))
 				insert(pixelArr, {tonumber(pixelD.x), tonumber(pixelD.y)})
 			end
 			local rgbD = decodeRGB(tonumber(rgb, 16))
-			frame[{tonumber(rgbD.r), tonumber(rgbD.g), tonumber(rgbD.b)}] = pixelArr
+			insert(frame, { rgbD, pixelArr })
 		end
 		insert(ds, frame)
 	end
