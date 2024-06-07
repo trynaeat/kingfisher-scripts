@@ -1,7 +1,7 @@
 s = screen
 
 function drawArc (x, y, radius, startAngle, arcAngle, width)
-	for i=startAngle, arcAngle + startAngle, 1 do
+	for i=startAngle, arcAngle + startAngle, 4 do
 		for r=radius, radius + width - 1 do
 			local pixel = { x = x + r * math.cos(math.rad(i)), y = y - r * math.sin(math.rad(i)) }
 			s.drawRect(pixel.x, pixel.y, 1, 1)
