@@ -81,14 +81,18 @@ def getRect(rects, img, startPoint):
     endY = startPoint.y
     # Then look for any rows of at least same length below
     for y in range(startPoint.y, h):
-        goodRow = True
+        goodRow = False
         row = img[y]
         for j in range(startPoint.x, endX):
             isWhite = row[j]
             if not isWhite or rectsContain(rects, Point(j, y)):
                 goodRow = False
+                break
+            goodRow = True
         if goodRow:
             endY = y
+        else:
+            break
     return Rect(startPoint.x, startPoint.y, endX - startPoint.x + 1, endY - startPoint.y + 1)
 
 # Split a black/white island into rectangles
