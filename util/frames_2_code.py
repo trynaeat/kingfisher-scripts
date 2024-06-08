@@ -20,6 +20,32 @@ def encode16 (pixel):
 def encodeRGB16 (rgb):
     return rgb[0] * 256 * 256 + rgb[1] * 256 + rgb[2]
 
+# img is a numpy array of RGBs
+# Returns dict with <color> -> <mask>
+def colorMask (img):
+    masks = dict()
+    (w, h, _) = img.shape
+    colors = np.unique(img.reshape(-1, 3), axis=0)
+    print(colors)
+    for c in colors:
+        (r, g, b) = c
+        if np.all(c==[255,255,255]):
+            continue
+        print(f'Color: {c}')
+        mask = np.zeros((h, w), np.uint8)
+        mask[np.all(img==c, axis=-1)] = 255
+        imgName = f'DEBUG-{c[0]}-{c[1]}-{c[2]}'
+        iio.imwrite(f'{imgName}.png', mask)
+        masks[(r, g, b)] = mask
+    return masks
+
+# Split img into islands by color
+# we create a b/w mask for each individual color first with colorMask, then run this on it
+def getIslands(img):
+    n, labels = cv2.connectedComponents(img.astype('uint8'))
+    islands = [labels == i for i in range(1, n)]
+    return islands
+
 
 @click.command()
 @click.argument('dir')
@@ -35,6 +61,7 @@ def frames2Code(dir, gamma_correction, test_image, filesize, out):
         if not file.is_file():
             continue
         img = iio.imread(file)
+        masks = colorMask(img)
         invGamma = gamma_correction
         table = np.array([((i / 255.0) ** invGamma) * 255
             for i in np.arange(0, 256)]).astype("uint8")
