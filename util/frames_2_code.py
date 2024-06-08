@@ -28,8 +28,10 @@ def toLuaCode(dict):
         str += f'={rgb}={pixels}'
     return str
 
-def encode16 (pixel):
-    return pixel[0] * 256 + pixel[1]
+# Encodes in 4 bytes:
+# x,y,width,height
+def encode16 (rect):
+    return rect.x * 256 * 256 * 256 + rect.y * 256 * 256 + rect.width * 256 + rect.height
 
 def encodeRGB16 (rgb):
     return rgb[0] * 256 * 256 + rgb[1] * 256 + rgb[2]
@@ -38,13 +40,13 @@ def encodeRGB16 (rgb):
 # Returns dict with <color> -> <mask>
 def colorMask (img):
     masks = dict()
-    (w, h, _) = img.shape
+    (h, w, _) = img.shape
     colors = np.unique(img.reshape(-1, 3), axis=0)
     for c in colors:
         (r, g, b) = c
+        # skip black areas
         if np.all(c==[0,0,0]):
             continue
-        print(f'Color: {c}')
         mask = np.zeros((h, w), np.uint8)
         mask[np.all(img==c, axis=-1)] = 255
         imgName = f'DEBUG-{c[0]}-{c[1]}-{c[2]}'
@@ -67,7 +69,7 @@ def rectsContain(rects, point):
     return False
 
 def getRect(rects, img, startPoint):
-    (w, h) = img.shape
+    (h, w) = img.shape
     endX = startPoint.x
     # Get contiguous white pixels in a row
     for x in range(startPoint.x, w):
@@ -93,7 +95,7 @@ def getRect(rects, img, startPoint):
 # (x, y, width, height)
 def getRects(img):
     rects = []
-    (w, h) = img.shape
+    (h, w) = img.shape
     for y in range(0,h):
         for x in range(0, w):
             point = Point(x, y)
@@ -127,20 +129,21 @@ def debugDrawRects(rects, width, height):
 def frames2Code(dir, gamma_correction, test_image, filesize, out):
     images = list()
     colorIslands = dict()
-    rects = dict()
     codeOut = ''
     # Read all files and gamma correct
     for file in sorted(Path(dir).iterdir()):
         click.echo(file.name)
         if not file.is_file():
             continue
-        img = iio.imread(file)
+        img = iio.imread(file, pilmode="RGB", mode="F")
         invGamma = gamma_correction
         table = np.array([((i / 255.0) ** invGamma) * 255
             for i in np.arange(0, 256)]).astype("uint8")
         img = cv2.LUT(img, table)
         images.append(img)
     for i, img in enumerate(images):
+        rects = dict()
+        (h, w, _) = img.shape
         imgCode = dict()
         # split into color islands
         masks = colorMask(img)
@@ -155,15 +158,13 @@ def frames2Code(dir, gamma_correction, test_image, filesize, out):
                 if not k in rects:
                     rects[k] = []
                 rects[k] = rects[k] + r
-        debugDrawRects(rects, 64, 64)
-        for y, row in enumerate(img):
-            for x, val in enumerate(row):
-                rgb = hex(encodeRGB16(val))[2:]
-                if rgb != '0':
-                    if not rgb in imgCode:
-                        imgCode[rgb] = list()
-                    pixelHex = hex(encode16((x, y)))
-                    imgCode[rgb].append(pixelHex[2:])
+        debugDrawRects(rects, w, h)
+        for color in rects.keys():
+            rgb = hex(encodeRGB16(color))[2:]
+            imgCode[rgb] = list()
+            for r in rects[color]:
+                rectHex = hex(encode16(r))
+                imgCode[rgb].append(rectHex[2:])
         frameCode = toLuaCode(imgCode)
         if codeOut == '':
             codeOut = frameCode

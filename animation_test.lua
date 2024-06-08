@@ -75,8 +75,8 @@ function AnimationManager:draw()
 	for k,v in pairs(frame) do
 		s.setColor(unpack(v[1]))
 		for i,p in ipairs(v[2]) do
-			local x, y = unpack(p)
-			s.drawRectF(x, y, 1, 1)
+			local x, y, width, height = unpack(p)
+			s.drawRectF(x, y, width, height)
 		end
 	end
 end
@@ -90,8 +90,8 @@ function decodeRGB(rgb)
 	return { rgb >> 16, rgb >> 8 & ~tonumber('FF00', 16), rgb & ~tonumber('FFFF00', 16) }
 end
 
-function decodePixel(pixel)
-	return { x = pixel >> 8, y = (pixel & ~tonumber('FF00', 16)) }
+function decodeRect(rect)
+	return { x = rect >> 24, y = (rect >> 16 & ~tonumber('FF00', 16)), width = (rect >> 8 & ~tonumber('FFFF00', 16)), height = rect & ~tonumber('FFFFFF00', 16) }
 end
 
 function deserialize(str)
@@ -99,14 +99,14 @@ function deserialize(str)
 	local frames = gmatch(str, "|([^|]+)")
 	for f in frames do
 		local frame = {}
-		for rgb, pixels in gmatch(f, "=(%x+)=([^=]*)") do
-			local pixelArr = {}
-			for pixel in gmatch(pixels, "(%x+),?") do
-				local pixelD = decodePixel(tonumber(pixel, 16))
-				insert(pixelArr, {tonumber(pixelD.x), tonumber(pixelD.y)})
+		for rgb, rects in gmatch(f, "=(%x+)=([^=]*)") do
+			local rectArr = {}
+			for rect in gmatch(rects, "(%x+),?") do
+				local rectD = decodeRect(tonumber(rect, 16))
+				insert(rectArr, { tonumber(rectD.x), tonumber(rectD.y), tonumber(rectD.width), tonumber(rectD.height) })
 			end
 			local rgbD = decodeRGB(tonumber(rgb, 16))
-			insert(frame, { rgbD, pixelArr })
+			insert(frame, { rgbD, rectArr })
 		end
 		insert(ds, frame)
 	end
@@ -114,7 +114,7 @@ function deserialize(str)
 end
 
 local dStr = ''
-local dataCt = 3
+local dataCt = 2
 for i=1,dataCt do
 	local data = property.getText("data" .. i)
 	dStr = dStr .. data
