@@ -43,14 +43,14 @@ function WaterGauge:draw()
 		self.color[k] = self.colorFull[k] + ( 1- self.value) * self.colorSlope[k]
 	end
 	s.setColor(unpack(self.color))
-	s.drawRectF(76, 24, 3, 5)
-	s.drawRectF(75, 26, 1, 2)
-	s.drawRectF(79, 26, 1, 2)
-	s.drawRectF(77, 22, 1, 2)
+	s.drawRectF(76, 23, 3, 5)
+	s.drawRectF(75, 25, 1, 2)
+	s.drawRectF(79, 25, 1, 2)
+	s.drawRectF(77, 21, 1, 2)
 	-- Draw Number
 	s.setColor(unpack(white))
 	local formatted = format("%0.0f", self.value * 100)
-	Txt(82, 24, formatted)
+	Txt(82, 23, formatted)
 end
 
 function drawBackgroundLines ()
