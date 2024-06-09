@@ -38,7 +38,7 @@ def encodeRGB16 (rgb):
 
 # img is a numpy array of RGBs
 # Returns dict with <color> -> <mask>
-def colorMask (img):
+def colorMask (img, debug):
     masks = dict()
     (h, w, _) = img.shape
     colors = np.unique(img.reshape(-1, 3), axis=0)
@@ -49,8 +49,9 @@ def colorMask (img):
             continue
         mask = np.zeros((h, w), np.uint8)
         mask[np.all(img==c, axis=-1)] = 255
-        imgName = f'DEBUG-{c[0]}-{c[1]}-{c[2]}'
-        iio.imwrite(f'{imgName}.png', mask)
+        if debug:
+            imgName = f'DEBUG-{c[0]}-{c[1]}-{c[2]}'
+            iio.imwrite(f'{imgName}.png', mask)
         masks[(r, g, b)] = mask
     return masks
 
@@ -124,33 +125,51 @@ def debugDrawRects(rects, width, height):
             i = i + 1
     iio.imwrite(f'DEBUG_rects.png', img)
 
+# Apply gamma function to image
+def fixGamma(img, gamma):
+    invGamma = gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255
+        for i in np.arange(0, 256)]).astype("uint8")
+    img = cv2.LUT(img, table)
+    return img
+
 @click.command()
 @click.argument('dir')
 @click.option('--gamma-correction', type=float, default=2.1, show_default=True)
 @click.option('--test-image', type=int)
 @click.option('--filesize', type = int, default=4096, show_default=True)
 @click.option('--out', type=str, default="out", show_default=True)
-def frames2Code(dir, gamma_correction, test_image, filesize, out):
+@click.option('--debug', type=bool, default=False)
+def frames2Code(dir, gamma_correction, test_image, filesize, out, debug):
     images = list()
     colorIslands = dict()
     codeOut = ''
-    # Read all files and gamma correct
-    for file in sorted(Path(dir).iterdir()):
-        click.echo(file.name)
-        if not file.is_file():
-            continue
-        img = iio.imread(file, pilmode="RGB", mode="F")
-        invGamma = gamma_correction
-        table = np.array([((i / 255.0) ** invGamma) * 255
-            for i in np.arange(0, 256)]).astype("uint8")
-        img = cv2.LUT(img, table)
-        images.append(img)
+    # If it's a gif just read all the frames in
+    if dir.endswith('.gif'):
+        click.echo(dir)
+        frames = iio.imread(dir, pilmode="RGBA", mode="F")
+        for img in frames:
+            # Get rid of A channel. Anything transparent gets turned into black (0,0,0)
+            (h, w, _) = img.shape
+            img[np.where(img[:, :, 3] == 0)] = [0, 0, 0, 1]
+            img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+            img = fixGamma(img, gamma_correction)
+            images.append(img)
+    else:
+        # Read all files and gamma correct
+        for file in sorted(Path(dir).iterdir()):
+            click.echo(file.name)
+            if not file.is_file():
+                continue
+            img = iio.imread(file, pilmode="RGB", mode="F")
+            img = fixGamma(img, gamma_correction)
+            images.append(img)
     for i, img in enumerate(images):
         rects = dict()
         (h, w, _) = img.shape
         imgCode = dict()
         # split into color islands
-        masks = colorMask(img)
+        masks = colorMask(img, debug)
         for k in masks.keys():
             islands = getIslands(masks[k])
             colorIslands[k] = islands
@@ -162,7 +181,8 @@ def frames2Code(dir, gamma_correction, test_image, filesize, out):
                 if not k in rects:
                     rects[k] = []
                 rects[k] = rects[k] + r
-        debugDrawRects(rects, w, h)
+        if debug:
+            debugDrawRects(rects, w, h)
         for color in rects.keys():
             rgb = hex(encodeRGB16(color))[2:]
             imgCode[rgb] = list()
