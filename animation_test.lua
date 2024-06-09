@@ -6,6 +6,7 @@ local match = string.match
 local gmatch = string.gmatch
 
 local oldMode = 0
+local done = false
 
 function merge(t1, t2)
 	for k, v in ipairs(t2) do
@@ -41,9 +42,11 @@ function AnimationManager:new(o)
 	o = o or {}
 	o.frame = 1
 	o.ticks = 0
+	o.loop = o.loop or false
 	o.fps = o.fps or 24
 	o.data = o.data or {}
 	o.stopped = true
+	o.onDone = o.onDone or nil
 	o.tick = self.tick
 	o.draw = self.draw
 	o.reset = self.reset
@@ -63,6 +66,16 @@ end
 function AnimationManager:tick()
 	if self.stopped then
 		return	
+	end
+	if self.frame >= #self.data then
+		if self.loop then
+			self.ticks = 0
+			self.frame = 1
+			return
+		end
+		if self.onDone then
+			self.onDone()	
+		end
 	end
 	self.ticks = min(self.ticks + 1, 120000)
 	if self.ticks / self.frame >= 60 / self.fps then
@@ -113,6 +126,11 @@ function deserialize(str)
 	return ds
 end
 
+-- Set output 1 to true when animation ends
+function onPlayed()
+	done = true
+end
+
 local dStr = ''
 local dataCt = 2
 for i=1,dataCt do
@@ -120,12 +138,13 @@ for i=1,dataCt do
 	dStr = dStr .. data
 end
 local ds = deserialize(dStr)
-local a = AnimationManager:new({ data = ds, fps = 24 })
+local a = AnimationManager:new({ data = ds, fps = 24, loop = false, onDone = onPlayed })
 
 local e = EventEmitter:new({ eventSubs = { modeChange = {} } })
 
 function onModeChange(mode)
 	if mode == 1 then
+		done = false
 		a:reset()
 		a:start()
 	else
@@ -139,6 +158,7 @@ function onDraw()
 end
 
 function onTick()
+	output.setBool(1, done)
 	local mode = input.getNumber(5)
 	if mode ~= oldMode then
 		e:emit("modeChange", mode)
