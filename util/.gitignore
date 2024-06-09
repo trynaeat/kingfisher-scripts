@@ -5,3 +5,4 @@ include/
 share/
 test.*
 out*.txt
+DEBUG*
