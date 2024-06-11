@@ -1,15 +1,13 @@
 -- BlinkAnim
 local BlinkAnim = {}
 function BlinkAnim:new(o)
-	o = o or {}
-	o.target = o.target or nil
-	o.count = o.count or 3
+	o.target = o.target
+	o.count = o.count or 7
 	-- In game ticks
-	o.duration = o.duration or 30
+	o.duration = o.duration
 	o.currCount = 0
 	o.ticks = 0
 	o.stopped = true
-	o.flipped = false
 	o.tick = self.tick
 	o.start = self.start
 	o.reset = self.reset
@@ -25,9 +23,6 @@ function BlinkAnim:tick()
 		self.ticks = 0
 		self.flipped = false
 		self.target.visible = not self.target.visible
-	elseif self.ticks >= self.duration / 2 and not self.flipped then
-		self.target.visible = not self.target.visible
-		self.flipped = true
 	end
 	if self.currCount >= self.count then
 		self.stopped = true
