@@ -122,15 +122,9 @@ function Toggle:draw()
 	end
 end
 
-function setAltH (btn)
+function setCam (btn)
 	return function ()
 		output.setBool(1, btn.value)
-	end
-end
-
-function setStb (btn)
-	return function ()
-		output.setBool(2, btn.value)	
 	end
 end
 
@@ -149,21 +143,21 @@ local apInput = TouchEmitter:new({ eventSubs = { alt = {}, stb = {}, ap = {} } }
 -- sub to events from the AP controller and change state output as well
 -- cb - callback when clicked
 -- onChange - callback when state change is driven by input from AP controller
-local altToggle = Toggle:new({ label = "ALTH", y = 2})
-altToggle.cb = setAltH(altToggle)
-altToggle.onChange = setAltH(altToggle)
-local apToggle = Toggle:new({ label = "NAV", y = 9 })
+local camToggle = Toggle:new({ label = "CAM", y = 9})
+camToggle.cb = setCam(camToggle)
+camToggle.onChange = setCam(camToggle)
+local apToggle = Toggle:new({ label = "NAV", y = 2 })
 apToggle.cb = setAP(apToggle)
 apToggle.onChange = setAP(apToggle)
 
-e:subscribe("mouseDown", altToggle:onClick())
-apInput:subscribe("alt", altToggle:setValue())
+e:subscribe("mouseDown", camToggle:onClick())
+apInput:subscribe("alt", camToggle:setValue())
 e:subscribe("mouseDown", apToggle:onClick())
 apInput:subscribe("ap", apToggle:setValue())
 
 function onDraw()
-	if mode ~= 4 then return end
-	altToggle:draw()
+	if mode ~= 2 then return end
+	camToggle:draw()
 	apToggle:draw()
 end
 
@@ -172,18 +166,9 @@ local stbTickCount = 0
 local apTickCount = 0
 function onTick()
 	mode = input.getNumber(5)
-	if mode ~= 4 then return end
+	if mode ~= 2 then return end
 	-- Emit events when the input autopilot composite values change
 	-- (i.e. autopilot turns itself off because user changed pitch etc)
-	local inputAltH = input.getBool(2)
-	if altToggle.value ~= inputAltH then
-		altTickCount = altTickCount + 1
-		if altTickCount > tickLimit then
-			apInput:emit("alt", inputAltH)
-			altTickCount = 0
-		end
-		return
-	end
 	local inputAP = input.getBool(4)
 	if apToggle.value ~= inputAP then
 		apTickCount = apTickCount + 1

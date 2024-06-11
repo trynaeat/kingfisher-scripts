@@ -5,10 +5,8 @@ local insert = table.insert
 local match = string.match
 local gmatch = string.gmatch
 
--- Property "fps" (num)
-local fps = 24
--- Property "dataFrames" (num)
-local dataFrames = 1
+local oldMode = 0
+local done = false
 
 function merge(t1, t2)
 	for k, v in ipairs(t2) do
@@ -128,22 +126,44 @@ function deserialize(str)
 	return ds
 end
 
+-- Set output 1 to true when animation ends
+function onPlayed()
+	done = true
+end
+
 local dStr = ''
-dataFrames = property.getNumber("dataFrames") or 1
-for i=1,dataFrames do
+local dataCt = 2
+for i=1,dataCt do
 	local data = property.getText("data" .. i)
 	dStr = dStr .. data
 end
 local ds = deserialize(dStr)
-fps = property.getNumber("fps") or 24
-local a = AnimationManager:new({ data = ds, fps = fps, loop = true })
-a:start()
+local a = AnimationManager:new({ data = ds, fps = 24, loop = false, onDone = onPlayed })
+
+local e = EventEmitter:new({ eventSubs = { modeChange = {} } })
+
+function onModeChange(mode)
+	if mode == 1 then
+		done = false
+		a:reset()
+		a:start()
+	else
+		done = true
+		a:stop()
+	end
+end
+e:subscribe("modeChange", onModeChange)
 
 function onDraw()
 	a:draw()
 end
 
 function onTick()
-	fps = input.getNumber(1)
+	output.setBool(1, done)
+	local mode = input.getNumber(5)
+	if mode ~= oldMode then
+		e:emit("modeChange", mode)
+		oldMode = mode
+	end
 	a:tick()
 end

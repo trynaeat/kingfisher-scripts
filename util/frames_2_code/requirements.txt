@@ -1,0 +1,5 @@
+click==8.1.7
+imageio==2.34.1
+numpy==1.26.4
+opencv-python==4.10.0.82
+pillow==10.3.0
