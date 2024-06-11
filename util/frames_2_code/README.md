@@ -36,3 +36,6 @@ Where each frame contains the following:
 Each color described above is a 3 byte hex integer. From left to right the bytes are the R, G, and B channels.
 
 Each rect is a 4 byte hex integer. From left to right the bytes are X, Y, Width, Height.
+
+## Limitations
+If you read the data format bit above you'll notice X, Y, Width, Height are all stored in 1 byte. That means at most they can store a value from 0-255, in other words it can only work on images of size 255x255 or less (8x8 monitor in Stormworks)
