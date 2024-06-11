@@ -5,8 +5,11 @@ local insert = table.insert
 local match = string.match
 local gmatch = string.gmatch
 
-local oldMode = 0
+local wasLoaded = false
+-- Whether the animation here is done
 local done = false
+-- Whether the loading screen is done, trigger this to start playing
+local loaded = false
 
 function merge(t1, t2)
 	for k, v in ipairs(t2) do
@@ -140,30 +143,33 @@ end
 local ds = deserialize(dStr)
 local a = AnimationManager:new({ data = ds, fps = 24, loop = false, onDone = onPlayed })
 
-local e = EventEmitter:new({ eventSubs = { modeChange = {} } })
+local e = EventEmitter:new({ eventSubs = { loaded = {} } })
 
-function onModeChange(mode)
-	if mode == 1 then
+function loaded(isLoaded)
+	if isLoaded then
 		done = false
 		a:reset()
 		a:start()
 	else
-		done = true
+		done = false
 		a:stop()
 	end
 end
-e:subscribe("modeChange", onModeChange)
+e:subscribe("loaded", loaded)
 
 function onDraw()
+    if done or not loaded then
+        return
+    end
 	a:draw()
 end
 
 function onTick()
 	output.setBool(1, done)
-	local mode = input.getNumber(5)
-	if mode ~= oldMode then
-		e:emit("modeChange", mode)
-		oldMode = mode
+	loaded = input.getBool(1)
+	if loaded ~= wasLoaded then
+		e:emit("loaded", loaded)
+		wasLoaded = loaded
 	end
 	a:tick()
 end
