@@ -53,6 +53,9 @@ function FadeIn:tick()
 	self.target.opacity = (self.ticks / self.duration) * 255
 	if self.ticks >= self.duration then
 		self.stopped = true
+		if self.cb then
+			self.cb()	
+		end
 	end
 end
 
@@ -68,13 +71,12 @@ end
 local BlinkAnim = {}
 function BlinkAnim:new(o)
 	o.target = o.target
-	o.count = o.count or 3
+	o.count = o.count or 7
 	-- In game ticks
-	o.duration = o.duration or 30
+	o.duration = o.duration
 	o.currCount = 0
 	o.ticks = 0
 	o.stopped = true
-	o.flipped = false
 	o.tick = self.tick
 	o.start = self.start
 	o.reset = self.reset
@@ -90,9 +92,6 @@ function BlinkAnim:tick()
 		self.ticks = 0
 		self.flipped = false
 		self.target.visible = not self.target.visible
-	elseif self.ticks >= self.duration / 2 and not self.flipped then
-		self.target.visible = not self.target.visible
-		self.flipped = true
 	end
 	if self.currCount >= self.count then
 		self.stopped = true
@@ -128,7 +127,7 @@ end
 local Logo = {}
 function Logo:new()
 	o = {}
-	o.visible = true
+	o.visible = false
 	o.draw = self.draw
 	return o
 end
@@ -154,7 +153,10 @@ local logo = Logo:new()
 local text = Text:new()
 local loader = LoadingBar:new({ y = 31 })
 local anim = BlinkAnim:new({ target = logo, duration = 6 })
-local fadeIn = FadeIn:new({ target = text })
+local onFadeInDone = function()
+	anim:start()
+end
+local fadeIn = FadeIn:new({ target = text, cb = onFadeInDone })
 function onDraw()
 	if done then
 		return
@@ -169,7 +171,6 @@ function onModeChange(mode)
 	if mode == 1 then
 		done = false
 		anim:reset()
-		anim:start()
 		fadeIn:reset()
 		fadeIn:start()
 	end
