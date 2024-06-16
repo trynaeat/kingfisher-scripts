@@ -241,7 +241,6 @@ for y=1,32 do
 end
 
 function onDraw ()
-	timer.start()
 	for y = 1, 32 do
 		buffer[y] = {}	
 	end
@@ -249,5 +248,4 @@ function onDraw ()
 	airGauge:draw(buffer)
 	pwrGauge:draw(buffer)
 	drawBuffer(buffer)
-	timer.stop()
 end
