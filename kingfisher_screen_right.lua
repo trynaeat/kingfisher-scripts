@@ -167,8 +167,8 @@ function Gauge:new (o)
 	o.y = o.y or 0
 	o.radius = o.radius or 16
 	o.w = o.w or 4
-	o.startAngle = o.startAngle or - pi / 9
-	o.endAngle = o.endAngle or 7 * pi / 6.5
+	o.startAngle = o.startAngle or - 0.559
+	o.endAngle = o.endAngle or pi + 0.559
 	o.value = 0
 	o.label = o.label or nil
 	o.showNum = true
@@ -181,18 +181,19 @@ end
 function Gauge:draw (buffer)
 	setColor(table.unpack(self.backColor))
 	-- Draw background
-	drawArc(self.x, self.y, self.radius, self.startAngle, self.endAngle, buffer, self.backColor)
+	drawArc(self.x, self.y, self.radius, self.startAngle - 0.3, self.endAngle + 0.3, buffer, self.backColor)
 	drawArc(self.x, self.y, self.radius + self.w, self.startAngle, self.endAngle, buffer, self.backColor)
-	drawLine(buffer, self.backColor, self.x - self.radius - 2, self.y + self.radius - 6, self.x + self.radius + 2, self.y + self.radius - 6)
+	drawLine(buffer, self.backColor, self.x - self.radius - 1, self.y + self.radius - 2, self.x + self.radius + 1, self.y + self.radius - 2)
 	-- floodFill(buffer, {1, 96}, {1, 32}, self.backColor, self.x - self.radius - 2, self.y)
 	-- Draw filled in bar based on value
 	setColor(table.unpack(self.foreColor))
-	local startAngle = max((1 - self.value) * (self.endAngle - self.startAngle), (self.endAngle - self.startAngle) / 2)
-	local endX = round(self.x + (self.radius + self.w) * cos(startAngle)) + self.w
+	local startAngle = max(self.endAngle - self.value * (self.endAngle - self.startAngle), pi / 2)
+	local bottomXBound = round(self.x + self.radius  * cos(self.endAngle)) + 1
+	local endX = max(round(self.x + self.radius* cos(startAngle)), bottomXBound)
 	local endY = round(self.y - (self.radius + self.w) * sin(startAngle))
 	-- Initial part to "click" to start filling
-	local startX = self.x - self.radius - 1
-	local startY = self.y + 4
+	local startX = self.x - self.radius
+	local startY = self.y + 5
 	-- First half of bar
 	floodFill(buffer, { self.x - self.radius - self.w, endX }, { endY, self.y + self.radius + self.w }, self.foreColor, startX, startY)
 	-- Second half of bar
@@ -211,7 +212,7 @@ function Gauge:draw (buffer)
 	if self.showNum then
 		setColor(238, 238, 238)
 		local formatted = string.format("%0.0f", self.value * 100)
-		screen.drawTextBox(self.x - self.radius + 1, self.y + 7, self.radius * 2, 5, formatted, 0)
+		screen.drawTextBox(self.x - self.radius + 1, self.y + 10, self.radius * 2, 5, formatted, 0)
 	end
 end
 
@@ -219,9 +220,9 @@ function Gauge:setValue(v)
 	self.value = v
 end
 
-local wtrGauge = Gauge:new({x = 15, y = 18, radius = 11, label = "WTR"})
-local airGauge = Gauge:new({x = 47, y = 18, radius = 11, label = "AIR"})
-local pwrGauge = Gauge:new({x = 79, y = 18, radius = 11, label = "PWR"})
+local wtrGauge = Gauge:new({x = 15, y = 16, radius = 10, label = "WTR"})
+local airGauge = Gauge:new({x = 47, y = 16, radius = 10, label = "AIR"})
+local pwrGauge = Gauge:new({x = 79, y = 16, radius = 10, label = "PWR"})
 
 
 function onTick ()
