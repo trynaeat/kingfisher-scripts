@@ -6,6 +6,7 @@ local getNumber = input.getNumber
 local setColor = s.setColor
 local drawTextBox = s.drawTextBox
 local drawRectF = s.drawRectF
+local floor = math.floor
 
 local screenWidth = 0
 local screenHeight = 0
@@ -14,9 +15,11 @@ local alt = 0
 local speed = 0
 local mode = 0
 local water = 0
-local wind = 0
+local windSpd = 0
+local windDir = 0
 local seafloor = 0
 local depth = 0
+local time = 0
 
 local white = { 238, 238, 238 }
 
@@ -35,6 +38,51 @@ dl=s.drawLine
 
 function Txt(x,y,t)for i=1,#t do c=t:sub(i,i):upper():byte()*3-95if c>193then c=c-78 end a="0x"..string.sub("0000B0101F6F5FAB6DEDA010096690A4A4E4048444080168F9F8FABDDDB9F47DBBDDF3D1FDFF570500580A4AAA4A0391B96E5E6DF99669F9DF15FD96F4F9F978496F88FF3FF1F69625F79FA5FDDA1F1F8F787FCFB4B3C3BFD09F861F902128880219F60F06F9426",c,c+2)for j=0,11 do if a&(1<<j)>0then b=x+j//4+i*4-4g=y+j%4 dl(b,g,b,g+1)end end end end
 -- ===========================
+
+-- Select Mode text
+local SelectText = { opacity = 255, txt = "SELECT MODE" }
+function SelectText:draw()
+	setColor(238, 238, 238, self.opacity)
+	drawTextBox(screenWidth / 2 - 27, screenHeight / 2 - 3, 55, 5, self.txt, 0)
+end
+
+-- Breathe Animation
+local Breathe = {}
+function Breathe:new(o)
+	o.target = o.target
+	-- In game ticks
+	o.inDuration = 120
+	o.outDuration = 120
+	o.ticks = 0
+	o.stopped = true
+	o.tick = self.tick
+	o.start = self.start
+	o.reset = self.reset
+	return o
+end
+
+function Breathe:tick()
+	if self.stopped then
+		return
+	end
+	self.ticks = self.ticks + 1
+	if self.ticks <= self.inDuration then
+		self.target.opacity = (self.ticks / self.inDuration) * 255
+	else
+		self.target.opacity = 255 - (((self.ticks - self.inDuration) / self.outDuration) * 255)
+	end
+	if self.ticks >= self.inDuration + self.outDuration then
+		self:reset()
+	end
+end
+
+function Breathe:start()
+	self.stopped = false
+end
+
+function Breathe:reset()
+	self.ticks = 0
+end
 
 local WaterGauge = {}
 function WaterGauge:new(o)
@@ -69,11 +117,6 @@ function WaterGauge:draw()
 	Txt(82, 23, formatted)
 end
 
-local drawBackgroundLines = function ()
-	local p={{4,140,135,255,24,0,2,1,70,0,2,1,25,1,2,1,69,1,2,1,26,2,2,1,68,2,2,1,27,3,2,1,67,3,2,1,28,4,2,1,66,4,2,1,29,5,38,1,29,23,38,1,28,24,2,1,66,24,2,1,27,25,2,1,67,25,2,1,26,26,2,1,68,26,2,1,25,27,2,1,69,27,2,1,24,28,2,1,70,28,2,1,23,29,2,1,71,29,2,1,0,30,24,1,72,30,24,1},{76,156,242,255,26,0,1,1,69,0,1,1,27,1,1,1,68,1,1,1,28,2,1,1,67,2,1,1,29,3,1,1,66,3,1,1,30,4,1,1,65,4,1,1,30,24,1,1,65,24,1,1,29,25,1,1,66,25,1,1,28,26,1,1,67,26,1,1,27,27,1,1,68,27,1,1,26,28,1,1,69,28,1,1,25,29,1,1,70,29,1,1,24,30,1,1,71,30,1,1},}
-	for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
-end
-
 local drawSpeed = function (mode)
 	setColor(255, 255, 255)
 	if speed < 0 then
@@ -92,6 +135,22 @@ local drawSpeed = function (mode)
 		output = format("%0.0f", depth)	
 	end
 	drawTextBox(screenWidth / 2 - 10, screenHeight / 2 - 3, 20, 5, output, 0)
+end
+
+local function drawBackupSpeed ()
+	Txt(1, 19, "SPD")
+	local knots = speed * 1.94
+	Txt(1, 25, format("%0.0f", knots))
+end
+
+local function drawTime ()
+	local hr = floor(time * 24)
+	local min = floor(((time * 24) % 1) * 100)
+	if min > 59 then
+		hr = hr + 1
+		min = min - 60
+	end
+	Txt(74, 2, format("%02d:%02d", hr, min))
 end
 
 local drawSpeedUnits = function (mode)
@@ -125,7 +184,7 @@ end
 
 local drawWind = function()
 	setColor(unpack(white))
-	local str = format("%04.0f", wind)
+	local str = format("%02d/%03d", floor(windSpd), floor(windDir))
 	Txt(1, 19, "WIND")
 	Txt(1, 25, str)
 end
@@ -138,13 +197,19 @@ local drawSeafloor = function()
 end
 
 local wGauge = WaterGauge:new()
-
+local breatheAnim = Breathe:new({ target = SelectText })
+breatheAnim:start()
 function onTick ()
+	breatheAnim:tick()
 	alt = getNumber(1)
 	speed = getNumber(2)
 	mode = getNumber(5)
 	water = getNumber(7)
 	depth = getNumber(10)
+	seafloor = getNumber(11)
+	windSpd = getNumber(12)
+	windDir = getNumber(13)
+	time = getNumber(14)
 	
 	wGauge.value = water
 end
@@ -152,7 +217,6 @@ end
 function onDraw ()
 	screenWidth = s.getWidth()
 	screenHeight = s.getHeight()
-	drawBackgroundLines()
 	drawSpeed(mode)
 	drawSpeedUnits(mode)
 	if mode == 2 then
@@ -160,7 +224,7 @@ function onDraw ()
 	end
 	if mode == 2 or mode == 5 then
 		drawSeafloor()
-	else
+	elseif mode ~= 1 then
 		wGauge:draw()
 	end
 	if mode == 3 or mode == 4 or mode == 6 then
@@ -168,8 +232,16 @@ function onDraw ()
 	end
 
 	setColor(unpack(white))
-	if mode > 0 then
+	if mode == 5 then
+		drawBackupSpeed(mode)
+	end
+	if mode > 1 then
 		Txt(1, 2, modes[mode])
 	end
-	Txt(74, 2, "00:00")
+	if mode > 1 then
+		drawTime()
+	end
+	if mode == 1 then
+		SelectText:draw()	
+	end
 end
