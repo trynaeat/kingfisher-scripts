@@ -5,6 +5,7 @@ local format = string.format
 local getNumber = input.getNumber
 local setColor = s.setColor
 local drawTextBox = s.drawTextBox
+local drawRectF = s.drawRectF
 
 local screenWidth = 0
 local screenHeight = 0
@@ -52,16 +53,16 @@ end
 
 function WaterGauge:draw()
 	-- Outlines converted from image
-	local p={{58,58,58,255,77,20,1,1,76,21,1,2,78,21,15,1,78,22,1,1,93,22,1,1,75,23,1,2,79,23,1,2,94,23,1,3,74,25,1,2,80,25,1,2,93,26,1,1,75,27,1,1,79,27,14,1,78,28,1,1},{16,16,16,255,79,22,14,1,80,23,14,2,81,25,13,1,81,26,12,1},{58,58,58,243,76,28,1,1},{58,58,58,249,77,28,1,1},{0,255,255,1,72,29,1,1},}  for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do s.drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
+	local p={{58,58,58,255,77,20,1,1,76,21,1,2,78,21,15,1,78,22,1,1,93,22,1,1,75,23,1,2,79,23,1,2,94,23,1,3,74,25,1,2,80,25,1,2,93,26,1,1,75,27,1,1,79,27,14,1,78,28,1,1},{16,16,16,255,79,22,14,1,80,23,14,2,81,25,13,1,81,26,12,1},{58,58,58,243,76,28,1,1},{58,58,58,249,77,28,1,1},{0,255,255,1,72,29,1,1},}  for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
 	-- Dynamic Water level
 	for k, v in ipairs(self.color) do
 		self.color[k] = self.colorFull[k] + ( 1- self.value) * self.colorSlope[k]
 	end
 	setColor(unpack(self.color))
-	s.drawRectF(76, 23, 3, 5)
-	s.drawRectF(75, 25, 1, 2)
-	s.drawRectF(79, 25, 1, 2)
-	s.drawRectF(77, 21, 1, 2)
+	drawRectF(76, 23, 3, 5)
+	drawRectF(75, 25, 1, 2)
+	drawRectF(79, 25, 1, 2)
+	drawRectF(77, 21, 1, 2)
 	-- Draw Number
 	setColor(unpack(white))
 	local formatted = format("%0.0f", self.value * 100)
@@ -70,7 +71,7 @@ end
 
 local drawBackgroundLines = function ()
 	local p={{4,140,135,255,24,0,2,1,70,0,2,1,25,1,2,1,69,1,2,1,26,2,2,1,68,2,2,1,27,3,2,1,67,3,2,1,28,4,2,1,66,4,2,1,29,5,38,1,29,23,38,1,28,24,2,1,66,24,2,1,27,25,2,1,67,25,2,1,26,26,2,1,68,26,2,1,25,27,2,1,69,27,2,1,24,28,2,1,70,28,2,1,23,29,2,1,71,29,2,1,0,30,24,1,72,30,24,1},{76,156,242,255,26,0,1,1,69,0,1,1,27,1,1,1,68,1,1,1,28,2,1,1,67,2,1,1,29,3,1,1,66,3,1,1,30,4,1,1,65,4,1,1,30,24,1,1,65,24,1,1,29,25,1,1,66,25,1,1,28,26,1,1,67,26,1,1,27,27,1,1,68,27,1,1,26,28,1,1,69,28,1,1,25,29,1,1,70,29,1,1,24,30,1,1,71,30,1,1},}
-	for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do s.drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
+	for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
 end
 
 local drawSpeed = function (mode)
@@ -98,7 +99,7 @@ local drawSpeedUnits = function (mode)
 	if mode == 3 or mode == 4 or mode == 6 then
 	-- KM/H (flight modes)
 		local p={{4,140,135,255,38,26,1,2,41,26,1,1,43,26,1,1,47,26,1,1,53,26,1,1,55,26,1,2,58,26,1,2,40,27,1,1,43,27,2,1,46,27,2,1,52,27,1,1,38,28,2,1,43,28,1,3,45,28,1,1,47,28,1,3,51,28,1,1,55,28,4,1,38,29,1,2,40,29,1,1,50,29,1,1,55,29,1,2,58,29,1,2,41,30,1,1,49,30,1,1},}
-		for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do s.drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
+		for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
 	end
 	-- Knots (yacht)
 	if mode == 2 then

@@ -161,11 +161,11 @@ function Gauge:new (o)
 	o = o or {}
 	self.__index = self
 	
-	o.backColor = o.backColor or { 84, 84, 84 }
-	o.foreColor = o.foreColor or { 4, 140, 135 }
+	o.backColor = { 84, 84, 84 }
+	o.foreColor = { 4, 140, 135 }
 	o.x = o.x or 0
 	o.y = o.y or 0
-	o.radius = o.radius or 16
+	o.r = o.r
 	o.w = o.w or 4
 	o.startAngle = o.startAngle or - 0.559
 	o.endAngle = o.endAngle or pi + 0.559
@@ -179,40 +179,39 @@ function Gauge:new (o)
 end
 
 function Gauge:draw (buffer)
-	setColor(table.unpack(self.backColor))
+	setColor(unpack(self.backColor))
 	-- Draw background
-	drawArc(self.x, self.y, self.radius, self.startAngle - 0.3, self.endAngle + 0.3, buffer, self.backColor)
-	drawArc(self.x, self.y, self.radius + self.w, self.startAngle, self.endAngle, buffer, self.backColor)
-	drawLine(buffer, self.backColor, self.x - self.radius - 1, self.y + self.radius - 2, self.x + self.radius + 1, self.y + self.radius - 2)
-	-- floodFill(buffer, {1, 96}, {1, 32}, self.backColor, self.x - self.radius - 2, self.y)
+	drawArc(self.x, self.y, self.r, self.startAngle - 0.3, self.endAngle + 0.3, buffer, self.backColor)
+	drawArc(self.x, self.y, self.r + self.w, self.startAngle, self.endAngle, buffer, self.backColor)
+	drawLine(buffer, self.backColor, self.x - self.r - 1, self.y + self.r - 2, self.x - self.r + 4, self.y + self.r - 2)
+	drawLine(buffer, self.backColor, self.x + self.r - 4, self.y + self.r - 2, self.x + self.r, self.y + self.r - 2)
 	-- Draw filled in bar based on value
-	setColor(table.unpack(self.foreColor))
+	setColor(unpack(self.foreColor))
 	local startAngle = max(self.endAngle - self.value * (self.endAngle - self.startAngle), pi / 2)
-	local bottomXBound = round(self.x + self.radius  * cos(self.endAngle)) + 1
-	local endX = max(round(self.x + self.radius* cos(startAngle)), bottomXBound)
-	local endY = round(self.y - (self.radius + self.w) * sin(startAngle))
+	local bottomXBound = round(self.x + self.r  * cos(self.endAngle)) + 1
+	local endX = max(round(self.x + self.r* cos(startAngle)), bottomXBound)
+	local endY = round(self.y - (self.r + self.w) * sin(startAngle))
 	-- Initial part to "click" to start filling
-	local startX = self.x - self.radius
+	local startX = self.x - self.r
 	local startY = self.y + 5
 	-- First half of bar
-	floodFill(buffer, { self.x - self.radius - self.w, endX }, { endY, self.y + self.radius + self.w }, self.foreColor, startX, startY)
+	floodFill(buffer, { self.x - self.r - self.w, endX }, { endY, self.y + self.r + self.w }, self.foreColor, startX, startY)
 	-- Second half of bar
 	if self.value >= 0.5 then
 		startAngle = (1 - self.value) * (self.endAngle - self.startAngle) + self.startAngle
-		endX = round(self.x + (self.radius + self.w) * cos(startAngle) + self.w)
-		endY = round(self.y - (self.radius + self.w) * sin(startAngle))
-		floodFill(buffer, { self.x, endX }, { self.y - self.radius - self.w, endY }, self.foreColor, self.x + 1, self.y - self.radius - 2)
+		endX = round(self.x + (self.r + self.w) * cos(startAngle) + self.w)
+		endY = round(self.y - (self.r + self.w) * sin(startAngle))
+		floodFill(buffer, { self.x, endX }, { self.y - self.r - self.w, endY }, self.foreColor, self.x + 1, self.y - self.r - 2)
 	end
-	-- drawArc(self.x, self.y, self.radius, math.floor(startAngle), endAngle - startAngle, self.w)
 	-- Draw label in middle of arc
 	if self.label ~= nil then
-		screen.drawTextBox(self.x - self.radius + 1, self.y - 2, self.radius * 2, 5, self.label, 0)
+		screen.drawTextBox(self.x - self.r + 1, self.y - 2, self.r * 2, 5, self.label, 0)
 	end
 	-- Draw numerical value
 	if self.showNum then
 		setColor(238, 238, 238)
 		local formatted = string.format("%0.0f", self.value * 100)
-		screen.drawTextBox(self.x - self.radius + 1, self.y + 10, self.radius * 2, 5, formatted, 0)
+		screen.drawTextBox(self.x - self.r + 1, self.y + 10, self.r * 2, 5, formatted, 0)
 	end
 end
 
@@ -220,9 +219,9 @@ function Gauge:setValue(v)
 	self.value = v
 end
 
-local wtrGauge = Gauge:new({x = 15, y = 16, radius = 10, label = "WTR"})
-local airGauge = Gauge:new({x = 47, y = 16, radius = 10, label = "AIR"})
-local pwrGauge = Gauge:new({x = 79, y = 16, radius = 10, label = "PWR"})
+local wtrGauge = Gauge:new({x = 15, y = 16, r = 10, label = "WTR"})
+local airGauge = Gauge:new({x = 47, y = 16, r = 10, label = "AIR"})
+local pwrGauge = Gauge:new({x = 79, y = 16, r = 10, label = "PWR"})
 
 
 function onTick ()

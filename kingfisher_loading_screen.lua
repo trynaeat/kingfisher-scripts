@@ -169,6 +169,7 @@ end
 local e = EventEmitter:new({ eventSubs = { modeChange = {} } })
 function onModeChange(mode)
 	if mode == 1 then
+		logo.visible = false
 		done = false
 		anim:reset()
 		fadeIn:reset()
