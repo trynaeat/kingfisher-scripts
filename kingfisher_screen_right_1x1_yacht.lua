@@ -177,6 +177,8 @@ function onTick()
 			apTickCount = 0	
 		end
 		return
+        else
+                apTickCount = 0
 	end
 
 	-- Click TouchEmitter handling
