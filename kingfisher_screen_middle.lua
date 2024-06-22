@@ -144,12 +144,9 @@ local function drawBackupSpeed ()
 end
 
 local function drawTime ()
-	local hr = floor(time * 24)
-	local min = floor(((time * 24) % 1) * 100)
-	if min > 59 then
-		hr = hr + 1
-		min = min - 60
-	end
+	local mins = floor(time * 24 * 60)
+	local hr = floor(mins / 60)
+	local min = mins % 60
 	Txt(74, 2, format("%02d:%02d", hr, min))
 end
 
