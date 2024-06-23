@@ -152,6 +152,7 @@ local slowToggle = Toggle:new({ label = "SLOW", y = 9 })
 slowToggle.cb = setSlow(slowToggle)
 local camToggle = Toggle:new({ label = "CAM", y = 16 })
 camToggle.cb = setCam(camToggle)
+camToggle.onChange = setCam(camToggle)
 
 e:subscribe("mouseDown", ldgToggle:onClick())
 e:subscribe("mouseDown", slowToggle:onClick())
