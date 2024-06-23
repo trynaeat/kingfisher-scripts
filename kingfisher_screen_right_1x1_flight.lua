@@ -172,7 +172,11 @@ local stbTickCount = 0
 local apTickCount = 0
 function onTick()
 	mode = input.getNumber(5)
-	if mode ~= 4 then return end
+	if mode ~= 4 then
+		altToggle:setValue()(false)
+		apToggle:setValue()(false)
+		return 
+	end
 	-- Emit events when the input autopilot composite values change
 	-- (i.e. autopilot turns itself off because user changed pitch etc)
 	local inputAltH = input.getBool(2)

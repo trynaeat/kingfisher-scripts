@@ -166,7 +166,12 @@ end
 
 function onTick()
     mode = input.getNumber(5)
-    if mode ~= 3 then return end
+    if mode ~= 3 then
+		ldgToggle:setValue()(false)
+		slowToggle:setValue()(false)
+		camToggle:setValue()(false)
+		return
+	end
 	-- Click TouchEmitter handling
 	local isPressed = input.getBool(1)
 	local mouseX = input.getNumber(3)

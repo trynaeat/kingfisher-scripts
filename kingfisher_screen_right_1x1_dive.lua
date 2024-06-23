@@ -152,7 +152,10 @@ local stbTickCount = 0
 local apTickCount = 0
 function onTick()
 	mode = input.getNumber(5)
-	if mode ~= 5 then return end
+	if mode ~= 5 then
+		camToggle:setValue()(false)
+		return
+	end
 
 	-- Click TouchEmitter handling
 	local isPressed = input.getBool(1)
