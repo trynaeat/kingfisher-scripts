@@ -110,8 +110,8 @@ local function onPrev ()
 end
 
 local e = TouchEmitter:new()
-local nextBtn = Button:new({ x = 54, y = 2, label = "N" })
-local prevBtn = Button:new({ y = 2, label = "P" })
+local nextBtn = Button:new({ x = 54, y = 2, label = ">" })
+local prevBtn = Button:new({ y = 2, label = "<" })
 nextBtn.cb = onNext
 prevBtn.cb = onPrev
 e:subscribe("mouseDown", nextBtn:onClick())

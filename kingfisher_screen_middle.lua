@@ -30,7 +30,7 @@ local white = { 238, 238, 238 }
 -- 4: Flight
 -- 5: Dive
 -- 6: Moon
-local modes = { "NONE", "YACHT", "HOVER", "FLIGHT", "DIVE", "MOON" }
+local modes = { "", "YACHT", "HOVER", "FLIGHT", "DIVE", "MOON" }
 
 -- Custom font stuff
 -- ======================
@@ -87,12 +87,12 @@ end
 local WaterGauge = {}
 function WaterGauge:new(o)
 	o = o or {}
-	o.colorFull = { 4, 140, 135 }
-	o.colorEmpty = { 225, 35, 35 }
-	o.colorSlope = {}
+	o.cFull = { 4, 140, 135 }
+	o.cEmpty = { 225, 35, 35 }
+	o.cSlope = {}
 	o.color = { 0, 0, 0 }
-	for k,v in ipairs(o.colorFull) do
-		insert(o.colorSlope, o.colorEmpty[k] - v)
+	for k,v in ipairs(o.cFull) do
+		insert(o.cSlope, o.cEmpty[k] - v)
 	end
 	o.value = 0
 	o.draw = self.draw
@@ -104,7 +104,7 @@ function WaterGauge:draw()
 	local p={{58,58,58,255,77,20,1,1,76,21,1,2,78,21,15,1,78,22,1,1,93,22,1,1,75,23,1,2,79,23,1,2,94,23,1,3,74,25,1,2,80,25,1,2,93,26,1,1,75,27,1,1,79,27,14,1,78,28,1,1},{16,16,16,255,79,22,14,1,80,23,14,2,81,25,13,1,81,26,12,1},{58,58,58,243,76,28,1,1},{58,58,58,249,77,28,1,1},{0,255,255,1,72,29,1,1},}  for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
 	-- Dynamic Water level
 	for k, v in ipairs(self.color) do
-		self.color[k] = self.colorFull[k] + ( 1- self.value) * self.colorSlope[k]
+		self.color[k] = self.cFull[k] + ( 1- self.value) * self.cSlope[k]
 	end
 	setColor(unpack(self.color))
 	drawRectF(76, 23, 3, 5)
@@ -205,7 +205,18 @@ function onTick ()
 	depth = getNumber(10)
 	seafloor = getNumber(11)
 	windSpd = getNumber(12)
-	windDir = getNumber(13)
+	-- Calc wind heading 0-360
+	local windVal = getNumber(13)
+	local heading = getNumber(15)
+	local absWind = (heading + windVal)
+	if absWind > 0.5 then
+		absWind = absWind - 1
+	end
+	if absWind < -0.5 then
+		absWind = absWind + 1
+	end
+	windDir = (360 + absWind * 360) % 360
+	-- Done with wind calc
 	time = getNumber(14)
 	
 	wGauge.value = water
