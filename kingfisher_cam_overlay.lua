@@ -7,9 +7,12 @@ local unpack = table.unpack
 local insert = table.insert
 
 local camMode = false
-local totalCams = 6
+local totalCams = 3
 local wasPressed = false
 local activeCam = 1
+
+local cams = { "BOW", "STERN", "HULL" }
+local label = cams[1]
 
 -- Button
 local Button = {}
@@ -69,6 +72,11 @@ function Button:draw()
 	end
 end
 
+local function drawLabel()
+	setColor(238, 238, 238)
+	drawTextBox(1, 1, 64, 9, label, 0, 0)
+end
+
 -- Can subscribe to these 2 events:
 -- mouseDown - fires when mouse is first clicked. cb called with args x, y
 -- mouseUp - fires when mouse is released from being clicked. cb called with args x, y
@@ -100,6 +108,7 @@ local function onNext ()
 	if activeCam > totalCams then
 		activeCam = 1	
 	end
+	label = cams[activeCam]
 end
 
 local function onPrev ()
@@ -107,6 +116,7 @@ local function onPrev ()
 	if activeCam < 1 then
 		activeCam = totalCams	
 	end
+	label = cams[activeCam]
 end
 
 local e = TouchEmitter:new()
@@ -142,4 +152,5 @@ function onDraw()
 	if not camMode then return end
 	nextBtn:draw()
 	prevBtn:draw()
+	drawLabel()
 end

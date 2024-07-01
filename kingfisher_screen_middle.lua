@@ -207,7 +207,7 @@ function onTick ()
 	windSpd = getNumber(12)
 	-- Calc wind heading 0-360
 	local windVal = getNumber(13)
-	local heading = getNumber(15)
+	local heading = getNumber(17)
 	local absWind = (heading + windVal)
 	if absWind > 0.5 then
 		absWind = absWind - 1
@@ -215,7 +215,9 @@ function onTick ()
 	if absWind < -0.5 then
 		absWind = absWind + 1
 	end
-	windDir = (360 + absWind * 360) % 360
+	-- Yeah we subtract because east is negative direction, -0.25
+	-- Big brain time
+	windDir = (360 - absWind * 360) % 360
 	-- Done with wind calc
 	time = getNumber(14)
 	
