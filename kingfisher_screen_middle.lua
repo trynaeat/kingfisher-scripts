@@ -20,6 +20,8 @@ local windDir = 0
 local seafloor = 0
 local depth = 0
 local time = 0
+local absSpeed = 0
+local alt40 = 0
 
 local white = { 238, 238, 238 }
 
@@ -49,10 +51,10 @@ end
 -- Breathe Animation
 local Breathe = {}
 function Breathe:new(o)
-	o.target = o.target
+	o.tgt = o.tgt
 	-- In game ticks
-	o.inDuration = 120
-	o.outDuration = 120
+	o.inDur = 120
+	o.outDur = 120
 	o.ticks = 0
 	o.stopped = true
 	o.tick = self.tick
@@ -66,12 +68,12 @@ function Breathe:tick()
 		return
 	end
 	self.ticks = self.ticks + 1
-	if self.ticks <= self.inDuration then
-		self.target.opacity = (self.ticks / self.inDuration) * 255
+	if self.ticks <= self.inDur then
+		self.tgt.opacity = (self.ticks / self.inDur) * 255
 	else
-		self.target.opacity = 255 - (((self.ticks - self.inDuration) / self.outDuration) * 255)
+		self.tgt.opacity = 255 - (((self.ticks - self.inDur) / self.outDur) * 255)
 	end
-	if self.ticks >= self.inDuration + self.outDuration then
+	if self.ticks >= self.inDur + self.outDur then
 		self:reset()
 	end
 end
@@ -100,13 +102,14 @@ function WaterGauge:new(o)
 end
 
 function WaterGauge:draw()
+	local color = self.color
 	-- Outlines converted from image
 	local p={{58,58,58,255,77,20,1,1,76,21,1,2,78,21,15,1,78,22,1,1,93,22,1,1,75,23,1,2,79,23,1,2,94,23,1,3,74,25,1,2,80,25,1,2,93,26,1,1,75,27,1,1,79,27,14,1,78,28,1,1},{16,16,16,255,79,22,14,1,80,23,14,2,81,25,13,1,81,26,12,1},{58,58,58,243,76,28,1,1},{58,58,58,249,77,28,1,1},{0,255,255,1,72,29,1,1},}  for i=1,#p do setColor(p[i][1],p[i][2],p[i][3],p[i][4]) for w=5,#p[i],4 do drawRectF(p[i][w],p[i][w+1]+0.5,p[i][w+2],p[i][w+3]) end end
 	-- Dynamic Water level
-	for k, v in ipairs(self.color) do
-		self.color[k] = self.cFull[k] + ( 1- self.value) * self.cSlope[k]
+	for k, v in ipairs(color) do
+		color[k] = self.cFull[k] + ( 1- self.value) * self.cSlope[k]
 	end
-	setColor(unpack(self.color))
+	setColor(unpack(color))
 	drawRectF(76, 23, 3, 5)
 	drawRectF(75, 25, 1, 2)
 	drawRectF(79, 25, 1, 2)
@@ -123,9 +126,10 @@ local drawSpeed = function (mode)
 		speed = 0	
 	end
 	local kph = speed * 3.6
+	local absKph = absSpeed * 3.6
 	local knots = speed * 1.94
 	local output = ""
-	if mode == 3 or mode == 4 or mode == 6 then
+	if mode == 3 or mode == 4 then
 		output = format("%0.0f", kph)
 	end
 	if mode == 2 then
@@ -133,6 +137,9 @@ local drawSpeed = function (mode)
 	end
 	if mode == 5 then
 		output = format("%0.0f", depth)	
+	end
+	if mode == 6 then
+		output = format("%0.0f", absKph)
 	end
 	drawTextBox(screenWidth / 2 - 10, screenHeight / 2 - 3, 20, 5, output, 0)
 end
@@ -170,8 +177,8 @@ end
 local drawAlt = function()
 	setColor(unpack(white))
 	local altStr = ""
-	if alt > 99999 then
-		altStr = format("%0.0fk", alt / 1000)		
+	if mode == 6 then
+		altStr = format("%0.0fk", alt40 / 1000)		
 	else
 		altStr = format("%0.0f", alt)
 	end
@@ -194,7 +201,7 @@ local drawSeafloor = function()
 end
 
 local wGauge = WaterGauge:new()
-local breatheAnim = Breathe:new({ target = SelectText })
+local breatheAnim = Breathe:new({ tgt = SelectText })
 breatheAnim:start()
 function onTick ()
 	breatheAnim:tick()
@@ -220,6 +227,9 @@ function onTick ()
 	windDir = (360 - absWind * 360) % 360
 	-- Done with wind calc
 	time = getNumber(14)
+
+	alt40 = getNumber(15)
+	absSpeed = getNumber(16)
 	
 	wGauge.value = water
 end
