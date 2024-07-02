@@ -120,8 +120,11 @@ function Toggle:draw()
 	end
 end
 
-function setLdg (btn)
+function setLdg (btn, camBtn)
 	return function ()
+		if btn.value and camBtn.value then
+			camBtn:setValue()(false)
+		end
 		output.setBool(1, btn.value)
 	end
 end
@@ -132,8 +135,11 @@ function setSlow (btn)
 	end
 end
 
-function setCam (btn)
+function setCam (btn, ldgBtn)
 	return function ()
+		if btn.value and ldgBtn.value then
+			ldgBtn:setValue()(false)
+		end
 		output.setBool(3, btn.value)	
 	end
 end
@@ -147,12 +153,15 @@ local e = TouchEmitter:new()
 -- cb - callback when clicked
 -- onChange - callback when state change is driven by input from AP controller
 local ldgToggle = Toggle:new({ label = "LDG", y = 2})
-ldgToggle.cb = setLdg(ldgToggle)
 local slowToggle = Toggle:new({ label = "SLOW", y = 9 })
 slowToggle.cb = setSlow(slowToggle)
 local camToggle = Toggle:new({ label = "CAM", y = 16 })
-camToggle.cb = setCam(camToggle)
-camToggle.onChange = setCam(camToggle)
+-- Cam/ldgtoggle callbacks depend on eachother.
+-- These btns are XOR, if one is on the other must toggle off
+camToggle.cb = setCam(camToggle, ldgToggle)
+camToggle.onChange = setCam(camToggle, ldgToggle)
+ldgToggle.cb = setLdg(ldgToggle, camToggle)
+ldgToggle.onChange = setLdg(ldgToggle, camToggle)
 
 e:subscribe("mouseDown", ldgToggle:onClick())
 e:subscribe("mouseDown", slowToggle:onClick())
