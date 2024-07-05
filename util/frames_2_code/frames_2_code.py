@@ -27,7 +27,7 @@ def toLuaCode(dict):
         pixels = pixels[:-1]
         str += f'={rgb}={pixels}'
     return str
-
+    
 # Encodes in 4 bytes:
 # x,y,width,height
 def encode16 (rect):
@@ -44,7 +44,6 @@ def colorMask (img, debug):
     colors = np.unique(img.reshape(-1, 3), axis=0)
     for c in colors:
         (r, g, b) = c
-        # skip black areas
         if np.all(c==[0,0,0]):
             continue
         mask = np.zeros((h, w), np.uint8)
@@ -72,28 +71,25 @@ def rectsContain(rects, point):
 def getRect(rects, img, startPoint):
     (h, w) = img.shape
     endX = startPoint.x
-    # Get contiguous white pixels in a row
-    for x in range(startPoint.x, w):
-        isWhite = img[startPoint.y, x]
-        if isWhite and not rectsContain(rects, Point(x, startPoint.y)):
-            endX = x
-        else:
-            break
     endY = startPoint.y
-    # Then look for any rows of at least same length below
-    for y in range(startPoint.y, h):
-        goodRow = False
-        row = img[y]
-        for j in range(startPoint.x, endX):
-            isWhite = row[j]
-            if not isWhite or rectsContain(rects, Point(j, y)):
-                goodRow = False
+    # Check contiguous white pixels to the right
+    for x in range(startPoint.x + 1, w):
+        if img[startPoint.y, x] == 0 or rectsContain(rects, Point(x, startPoint.y)):
+            break
+        endX = x
+    
+    # Check contiguous white pixels downwards
+    for y in range(startPoint.y + 1, h):
+        row_continues = True
+        for x in range(startPoint.x, endX + 1):
+            if img[y, x] == 0 or rectsContain(rects, Point(x, y)):
+                row_continues = False
                 break
-            goodRow = True
-        if goodRow:
+        if row_continues:
             endY = y
         else:
             break
+    
     return Rect(startPoint.x, startPoint.y, endX - startPoint.x + 1, endY - startPoint.y + 1)
 
 # Split a black/white island into rectangles
@@ -106,10 +102,9 @@ def getRects(img):
             point = Point(x, y)
             isWhite = img[point.y][point.x]
             if isWhite and not rectsContain(rects, point):
-                # Start constructing a new rect
                 rects.append(getRect(rects, img, point))
     return rects
-
+    
 # Test drawing out generated rects in 2 tones
 def debugDrawRects(rects, width, height):
     i = 0
@@ -124,12 +119,11 @@ def debugDrawRects(rects, width, height):
                     img[y][x] = c
             i = i + 1
     iio.imwrite(f'DEBUG_rects.png', img)
-
+    
 # Apply gamma function to image
 def fixGamma(img, gamma):
     invGamma = gamma
-    table = np.array([((i / 255.0) ** invGamma) * 255
-        for i in np.arange(0, 256)]).astype("uint8")
+    table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
     img = cv2.LUT(img, table)
     return img
 
@@ -137,7 +131,7 @@ def fixGamma(img, gamma):
 @click.argument('dir')
 @click.option('--gamma-correction', type=float, default=2.1, show_default=True)
 @click.option('--test-image', type=int)
-@click.option('--filesize', type = int, default=4096, show_default=True)
+@click.option('--filesize', type=int, default=4096, show_default=True)
 @click.option('--out', type=str, default="out", show_default=True)
 @click.option('--debug', type=bool, default=False)
 def frames2Code(dir, gamma_correction, test_image, filesize, out, debug):
@@ -170,6 +164,7 @@ def frames2Code(dir, gamma_correction, test_image, filesize, out, debug):
         imgCode = dict()
         # split into color islands
         masks = colorMask(img, debug)
+        colorIslands = {}  # Clear colorIslands for each frame
         for k in masks.keys():
             islands = getIslands(masks[k])
             colorIslands[k] = islands
@@ -194,17 +189,15 @@ def frames2Code(dir, gamma_correction, test_image, filesize, out, debug):
             codeOut = frameCode
         else:
             codeOut = '|'.join([codeOut, frameCode])
-
     # Wrap whole array of frames into its own table
     codeOut = f'{{{codeOut}}}'
     # Split code into 4k files
     chunkSize = filesize
     chunks = []
     if chunkSize == 0:
-      chunks = [codeOut]  
+        chunks = [codeOut]
     else:
-      chunks = [codeOut[i:i+chunkSize] for i in range(0, len(codeOut), chunkSize)]
-
+        chunks = [codeOut[i:i+chunkSize] for i in range(0, len(codeOut), chunkSize)]
     if test_image:
         testImg = images[test_image]
         iio.imwrite("./test.png", testImg)
