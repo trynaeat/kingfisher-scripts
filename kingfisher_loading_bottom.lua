@@ -131,8 +131,8 @@ function deserialize(str)
 end
 
 local dStr = ''
-dataFrames = 3
-for i=3,3 + dataFrames do
+dataFrames = 2
+for i=3,2 + dataFrames do
 	local data = property.getText("data" .. i)
 	dStr = dStr .. data
 end
