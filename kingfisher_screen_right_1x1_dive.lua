@@ -74,10 +74,13 @@ function Toggle:isClicked(x, y)
 	return x >= self.x and x <= self.x + self.width - 1 and y >= self.y and y <= self.y + self.height - 1
 end
 
-function Toggle:onClick()
+function Toggle:onClick(otherToggle)
 	return function (x, y)
 		if self:isClicked(x, y) then
 			self.value = not self.value	
+			if self.value then
+				otherToggle:setValue()(false)
+			end
 			if self.cb then
 				self.cb()	
 			end
@@ -128,6 +131,12 @@ function setCam (btn)
 	end
 end
 
+function setCave (btn)
+	return function ()
+		output.setBool(2, btn.value)
+	end
+end
+
 -- Event emitters
 local e = TouchEmitter:new()
 
@@ -140,11 +149,17 @@ local camToggle = Toggle:new({ label = "CAM", y = 2})
 camToggle.cb = setCam(camToggle)
 camToggle.onChange = setCam(camToggle)
 
-e:subscribe("mouseDown", camToggle:onClick())
+local caveToggle = Toggle:new({ label = "CAVE", y = 9}) -- Moved 1 pixel closer to camToggle
+caveToggle.cb = setCave(caveToggle)
+caveToggle.onChange = setCave(caveToggle)
+
+e:subscribe("mouseDown", camToggle:onClick(caveToggle))
+e:subscribe("mouseDown", caveToggle:onClick(camToggle))
 
 function onDraw()
 	if mode ~= 5 then return end
 	camToggle:draw()
+	caveToggle:draw()
 end
 
 local altTickCount = 0
@@ -154,6 +169,7 @@ function onTick()
 	mode = input.getNumber(5)
 	if mode ~= 5 then
 		camToggle:setValue()(false)
+		caveToggle:setValue()(false)
 		return
 	end
 
@@ -169,4 +185,6 @@ function onTick()
 		e:emit("mouseUp", mouseX, mouseY)
 		wasPressed = false
 	end
+end
+
 end
